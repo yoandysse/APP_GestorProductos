@@ -1,10 +1,7 @@
-import time
 import tkinter.messagebox
 import tkinter.ttk
 from tkinter import *
 from tkinter import ttk
-from tkinter.messagebox import showinfo
-import sqlite3
 import db
 from models import GestorProductos
 
@@ -21,16 +18,6 @@ class Producto:
         self.contenedor_tabla_productos()
         self.contenedor_estadistica()
         self.f_get_productos()
-
-
-
-        ############ Contenedor botonera ############
-        # Botones de Editar y Eliminar
-        boton_editar = ttk.Button(text="Editar", command=self.contenedor_edit_producto)
-        boton_editar.grid(row=999, column=0, sticky=W + E, columnspan=2)
-
-        boton_eliminar = ttk.Button(text="Eliminar", command=self.f_del_producto)
-        boton_eliminar.grid(row=999, column=2, sticky=W + E, columnspan=2)
 
 
 
@@ -94,6 +81,13 @@ class Producto:
         self.tabla.heading("Categoria", text="Categoria", anchor=CENTER)
         self.tabla.heading("Precio", text="Precio", anchor=CENTER)
         self.tabla.heading("Cantidad", text="Cantidad", anchor=CENTER)
+
+        # Botones de Editar y Eliminar
+        boton_editar = ttk.Button(text="Editar", command=self.contenedor_edit_producto)
+        boton_editar.grid(row=999, column=0, sticky=W + E, columnspan=2)
+
+        boton_eliminar = ttk.Button(text="Eliminar", command=self.f_del_producto)
+        boton_eliminar.grid(row=999, column=2, sticky=W + E, columnspan=2)
 
     def contenedor_estadistica(self):
         ############ Contenedor Estadistica ############
