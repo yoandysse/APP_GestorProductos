@@ -245,8 +245,8 @@ class Producto:
         try:
             self.tabla.item(self.tabla.selection())["text"][0]
         except IndexError as e:
-            self.mensaje["text"] = "Seleccione un producto antes editar"
-            self.mensaje["foreground"] = "red"
+            tkinter.messagebox.showerror(title="App Gestor de Productos", message="Seleccione un producto antes editar")
+
             return
 
         self.nombreOld = self.tabla.item(self.tabla.selection())["text"]
