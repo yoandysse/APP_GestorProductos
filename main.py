@@ -8,8 +8,6 @@ from models import GestorProductos
 
 class Producto:
 
-    db = "database/productos.db"
-
     def __init__(self, root):
         self.ventana = root
         self.ventana.title("App Gestor de Productos")
@@ -111,13 +109,6 @@ class Producto:
         self.valor_cantidad_productos = ttk.Label(estadistica_productos, text="")
         self.valor_cantidad_productos.grid(row=1, column=1)
 
-    def db_consulta(self, consulta, parametros = ()):
-        with sqlite3.connect(self.db) as con:
-            cursor = con.cursor()
-            resultado = cursor.execute(consulta, parametros)
-            con.commit()
-        return resultado
-
     def f_get_productos(self):
         ### Borrar informacion de la tabla para pedir los datos de nuevo
         registros_tabla = self.tabla.get_children()
@@ -144,9 +135,9 @@ class Producto:
             return "El campo nombre no puede estar vacío"
 
         else:
-            query = "SELECT nombre FROM producto WHERE nombre = ?"
-            result = self.db_consulta(query, (nombre_introducido,))
-            if result.fetchone() == None:
+            result = db.session.query(GestorProductos).filter_by(nombre=nombre_introducido).first()
+
+            if result == None:
                 return True
             else:
                 # print("El nombre del producto ya existe")
