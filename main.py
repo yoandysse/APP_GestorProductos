@@ -1,7 +1,9 @@
 import time
+import tkinter.messagebox
 import tkinter.ttk
 from tkinter import *
 from tkinter import ttk
+from tkinter.messagebox import showinfo
 import sqlite3
 import db
 from models import GestorProductos
@@ -14,10 +16,13 @@ class Producto:
         self.ventana.resizable(0,0)
         self.ventana.wm_iconbitmap("recursos/icono.ico")
 
+
         self.contenedor_registrar_producto()
         self.contenedor_tabla_productos()
         self.contenedor_estadistica()
         self.f_get_productos()
+
+
 
         ############ Contenedor botonera ############
         # Botones de Editar y Eliminar
@@ -175,9 +180,8 @@ class Producto:
             db.session.add(producto)
             db.session.commit()
 
+            tkinter.messagebox.showinfo(title="App Gestor de Productos", message="Producto {} agregado correctamente".format(self.nombre.get()))
 
-            self.mensaje["text"] = "Producto {} agregado correctamente".format(self.nombre.get())
-            self.mensaje["foreground"] = "green"
 
             self.nombre.delete(0, END)
             self.categoria.delete(0, END)
@@ -192,26 +196,28 @@ class Producto:
             # print(self.cantidad.get())
 
         elif self.validadion_nombre() != True :
-            self.mensaje["text"] = self.validadion_nombre()
-            self.mensaje["foreground"] = "red"
+            tkinter.messagebox.showerror(title="App Gestor de Productos", message=self.validadion_nombre())
+            self.nombre.focus()
 
         elif self.validadion_categoria() != True :
-            self.mensaje["text"] = self.validadion_categoria()
-            self.mensaje["foreground"] = "red"
+            tkinter.messagebox.showerror(title="App Gestor de Productos", message=self.validadion_categoria())
+            self.categoria.focus()
 
         elif self.validadion_precio() != True :
-            self.mensaje["text"] = self.validadion_precio()
-            self.mensaje["foreground"] = "red"
+            tkinter.messagebox.showerror(title="App Gestor de Productos", message=self.validadion_precio())
+            self.precio.focus()
 
         elif self.validadion_cantidad() != True :
-            self.mensaje["text"] = self.validadion_cantidad()
-            self.mensaje["foreground"] = "red"
+            tkinter.messagebox.showerror(title="App Gestor de Productos", message=self.validadion_cantidad())
+            self.cantidad.focus()
 
 
         self.f_get_productos()
 
     def f_upd_producto(self):
-        upd_producto = db.session.query(GestorProductos).filter_by(nombre=self.nombre.get()).first()
+
+
+        upd_producto = db.session.query(GestorProductos).filter_by(nombre=self.nombreOld).first()
 
         upd_producto.nombre = self.nombre.get()
         upd_producto.categoria = self.categoria.get()
@@ -220,8 +226,8 @@ class Producto:
 
         db.session.commit()
 
-        self.mensaje["text"] = "Producto {} editado correctamente".format(self.nombre.get())
-        self.mensaje["foreground"] = "green"
+        tkinter.messagebox.showinfo(title="App Gestor de Productos",
+                                    message="Producto {} editado correctamente".format(self.nombre.get()))
 
         self.contenedor_registrar_producto()
         self.f_get_productos()
@@ -234,9 +240,9 @@ class Producto:
         db.session.query(GestorProductos).filter_by(nombre=nombre).delete()
         db.session.commit()
 
+        tkinter.messagebox.showinfo(title="App Gestor de Productos",
+                                    message="Producto {} eliminado correctamente".format(self.nombre.get()))
 
-        self.mensaje["text"] = "Producto {} eliminado correctamente".format(nombre)
-        self.mensaje["foreground"] = "red"
 
         self.contenedor_registrar_producto()
         self.f_get_productos()
@@ -249,9 +255,9 @@ class Producto:
             self.mensaje["foreground"] = "red"
             return
 
-        nombre = self.tabla.item(self.tabla.selection())["text"]
+        self.nombreOld = self.tabla.item(self.tabla.selection())["text"]
 
-        producto = db.session.query(GestorProductos).filter_by(nombre=nombre).first()
+        producto = db.session.query(GestorProductos).filter_by(nombre=self.nombreOld).first()
         # print(producto)
 
         ############ Contenedor Editar Producto ############
