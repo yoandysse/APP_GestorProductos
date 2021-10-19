@@ -16,22 +16,22 @@ class Producto:
         self.ventana.resizable(0,0)
         self.ventana.wm_iconbitmap("recursos/icono.ico")
 
-        self.registrar_producto()
-        self.tabla_productos()
-        self.estadistica()
-        self.get_productos()
+        self.contenedor_registrar_producto()
+        self.contenedor_tabla_productos()
+        self.contenedor_estadistica()
+        self.f_get_productos()
 
         ############ Contenedor botonera ############
         # Botones de Editar y Eliminar
-        boton_editar = ttk.Button(text="Editar", command=self.edit_producto)
+        boton_editar = ttk.Button(text="Editar", command=self.contenedor_edit_producto)
         boton_editar.grid(row=999, column=0, sticky=W + E, columnspan=2)
 
-        boton_eliminar = ttk.Button(text="Eliminar", command=self.del_producto)
+        boton_eliminar = ttk.Button(text="Eliminar", command=self.f_del_producto)
         boton_eliminar.grid(row=999, column=2, sticky=W + E, columnspan=2)
 
 
 
-    def registrar_producto(self):
+    def contenedor_registrar_producto(self):
         ############ Contenedor Registrar Producto ############
         registrar_producto = LabelFrame(self.ventana, text = "Registrar Producto")
         registrar_producto.grid(row = 0, column = 0)
@@ -66,14 +66,14 @@ class Producto:
         self.cantidad.grid(row = 3, column = 1, sticky = W+E)
 
         ## Boton
-        self.boton_guardar = ttk.Button(registrar_producto, text="Guardar \nProducto", command = self.add_producto)
+        self.boton_guardar = ttk.Button(registrar_producto, text="Guardar \nProducto", command = self.f_add_producto)
         self.boton_guardar.grid(row = 0, column = 3, rowspan = 4, sticky = N+S)
 
         ## Mensaje de errore
         self.mensaje = ttk.Label(registrar_producto,text= '', anchor = CENTER, state="disabled")
         self.mensaje.grid(row = 4, columnspan = 4, sticky = W+E,)
 
-    def tabla_productos(self):
+    def contenedor_tabla_productos(self):
         ############ Contenedor Tabla de Productos ############
         tabla_productos = LabelFrame(self.ventana)
         tabla_productos.grid(row=1, column=0, columnspan=4, pady=10)
@@ -92,7 +92,7 @@ class Producto:
         self.tabla.heading("Precio", text="Precio", anchor=CENTER)
         self.tabla.heading("Cantidad", text="Cantidad", anchor=CENTER)
 
-    def estadistica(self):
+    def contenedor_estadistica(self):
         ############ Contenedor Estadistica ############
         estadistica_productos = LabelFrame(self.ventana, text="Estadistica Productos")
         estadistica_productos.grid(row=0, column=2)
@@ -118,26 +118,22 @@ class Producto:
             con.commit()
         return resultado
 
-    def get_productos(self):
+    def f_get_productos(self):
         ### Borrar informacion de la tabla para pedir los datos de nuevo
         registros_tabla = self.tabla.get_children()
         for fila in registros_tabla:
             self.tabla.delete(fila)
 
-
-        query = "SELECT * FROM producto ORDER BY nombre DESC"
-        registros = self.db_consulta(query)
-        registros = registros.fetchall()
+        registros = db.session.query(GestorProductos)
         cantidadProductos = 0
 
         ## Llenando Tabla
         for fila in registros:
-            # print(fila)
-            self.tabla.insert("",0, text= fila[1], values = (fila[2],fila[3],fila[4]) )
-            cantidadProductos += int(fila[4])
+            self.tabla.insert("",0, text= fila.nombre, values = (fila.categoria, fila.precio, fila.cantidad))
+            cantidadProductos += int(fila.cantidad)
 
         ## Mostrando Estadistica
-        self.valor_total_productos["text"] = str(len(registros))
+        self.valor_total_productos["text"] = str(registros.count())
         self.valor_cantidad_productos["text"] = cantidadProductos
 
     def validadion_nombre(self):
@@ -181,12 +177,14 @@ class Producto:
         else:
             return True
 
-    def add_producto(self):
+    def f_add_producto(self):
         if (self.validadion_nombre() and self.validadion_categoria() and self.validadion_precio() and self.validadion_cantidad()) == True:
 
-            query = "INSERT INTO producto VALUES(NULL, ?, ?,?,?)"
-            parametros = (self.nombre.get(), self.categoria.get(),self.precio.get(), self.cantidad.get())
-            self.db_consulta(query, parametros)
+            producto = GestorProductos(self.nombre.get(), self.categoria.get(),self.precio.get(), self.cantidad.get())
+            db.session.add(producto)
+            db.session.commit()
+
+
             self.mensaje["text"] = "Producto {} agregado correctamente".format(self.nombre.get())
             self.mensaje["foreground"] = "green"
 
@@ -219,34 +217,40 @@ class Producto:
             self.mensaje["foreground"] = "red"
 
 
-        self.get_productos()
+        self.f_get_productos()
 
-    def actualizar_producto(self):
+    def f_upd_producto(self):
+        upd_producto = db.session.query(GestorProductos).filter_by(nombre=self.nombre.get()).first()
 
-        query = "UPDATE producto SET nombre = ?, categoria = ?, precio = ?, cantidad = ? WHERE nombre = ?"
-        parametros = (self.nombre.get(), self.categoria.get(), self.precio.get(), self.cantidad.get(), self.nombre.get())
+        upd_producto.nombre = self.nombre.get()
+        upd_producto.categoria = self.categoria.get()
+        upd_producto.precio = self.precio.get()
+        upd_producto.cantidad = self.cantidad.get()
 
-        self.db_consulta(query, parametros)
+        db.session.commit()
+
         self.mensaje["text"] = "Producto {} editado correctamente".format(self.nombre.get())
         self.mensaje["foreground"] = "green"
 
-        self.registrar_producto()
-        self.get_productos()
+        self.contenedor_registrar_producto()
+        self.f_get_productos()
 
 
-    def del_producto(self):
+    def f_del_producto(self):
         # print(self.tabla.item(self.tabla.selection())) # Para debug
         nombre = self.tabla.item(self.tabla.selection())["text"]
-        query = "DELETE FROM producto WHERE nombre = ?"
-        self.db_consulta(query,(nombre,))
+
+        db.session.query(GestorProductos).filter_by(nombre=nombre).delete()
+        db.session.commit()
+
 
         self.mensaje["text"] = "Producto {} eliminado correctamente".format(nombre)
         self.mensaje["foreground"] = "red"
 
-        self.registrar_producto()
-        self.get_productos()
+        self.contenedor_registrar_producto()
+        self.f_get_productos()
 
-    def edit_producto(self):
+    def contenedor_edit_producto(self):
         try:
             self.tabla.item(self.tabla.selection())["text"][0]
         except IndexError as e:
@@ -255,12 +259,11 @@ class Producto:
             return
 
         nombre = self.tabla.item(self.tabla.selection())["text"]
-        query = "SELECT * FROM producto WHERE nombre = ?"
-        registro = self.db_consulta(query, (nombre,))
-        registro = registro.fetchone()
 
+        producto = db.session.query(GestorProductos).filter_by(nombre=nombre).first()
+        # print(producto)
 
-        ############ Contenedor Registrar Producto ############
+        ############ Contenedor Editar Producto ############
         editar_producto = LabelFrame(self.ventana, text="Editar Producto")
         editar_producto.grid(row=0, column=0)
 
@@ -269,7 +272,7 @@ class Producto:
         self.etiqueta_nombre.grid(row=0, column=0)
         ## Entry Nombre
         self.nombre = ttk.Entry(editar_producto)
-        self.nombre.insert(0, registro[1])
+        self.nombre.insert(0, producto.nombre)
         self.nombre.focus()
         self.nombre.grid(row=0, column=1)
 
@@ -279,10 +282,10 @@ class Producto:
         ## Entry Categoria
         self.categoria = ttk.Entry(editar_producto)
 
-        if registro[2] == None:
+        if producto.categoria == None:
             pass
         else:
-            self.categoria.insert(0, registro[2])
+            self.categoria.insert(0, producto.categoria)
 
         self.categoria.grid(row=1, column=1, sticky=W + E)
 
@@ -291,7 +294,7 @@ class Producto:
         self.etiqueta_precio.grid(row=2, column=0)
         ## Entry Precio
         self.precio = ttk.Entry(editar_producto)
-        self.precio.insert(0, registro[3])
+        self.precio.insert(0, producto.precio)
         self.precio.grid(row=2, column=1, sticky=W + E)
 
         ## Label Cantidad
@@ -299,13 +302,13 @@ class Producto:
         self.etiqueta_cantidad.grid(row=3, column=0)
         # Entry Cantidad
         self.cantidad = ttk.Entry(editar_producto)
-        self.cantidad.insert(0, registro[4])
+        self.cantidad.insert(0, producto.cantidad)
         self.cantidad.grid(row=3, column=1, sticky=W + E)
 
         ## Boton
-        self.boton_guardar = ttk.Button(editar_producto, text="Actualizar \nProducto", command=self.actualizar_producto)
+        self.boton_guardar = ttk.Button(editar_producto, text="Actualizar \nProducto", command=self.f_upd_producto)
         self.boton_guardar.grid(row=0, column=3, rowspan=2, sticky=N + S)
-        self.boton_guardar = ttk.Button(editar_producto, text="Eliminar \nProducto", command=self.del_producto)
+        self.boton_guardar = ttk.Button(editar_producto, text="Eliminar \nProducto", command=self.f_del_producto)
         self.boton_guardar.grid(row=2, column=3, rowspan=2, sticky=N + S)
 
         ## Mensaje de errore
