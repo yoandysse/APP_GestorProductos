@@ -3,7 +3,8 @@ import tkinter.ttk
 from tkinter import *
 from tkinter import ttk
 import sqlite3
-from time import sleep
+import db
+from models import GestorProductos
 
 class Producto:
 
@@ -182,6 +183,7 @@ class Producto:
 
     def add_producto(self):
         if (self.validadion_nombre() and self.validadion_categoria() and self.validadion_precio() and self.validadion_cantidad()) == True:
+
             query = "INSERT INTO producto VALUES(NULL, ?, ?,?,?)"
             parametros = (self.nombre.get(), self.categoria.get(),self.precio.get(), self.cantidad.get())
             self.db_consulta(query, parametros)
@@ -312,6 +314,8 @@ class Producto:
 
 
 if __name__ == '__main__':
+    db.Base.metadata.create_all(db.engine)
+
     root = Tk() # Instancia de la ventana principal
     app = Producto(root)
     root.mainloop()
